@@ -1,20 +1,33 @@
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+const Datastore = require('nedb-promises');
+const path = require('path');
 
-// Load environment variables
-dotenv.config();
+// Create databases for different collections
+const databases = {
+  users: Datastore.create({ 
+    filename: path.join(__dirname, '../data/users.db'), 
+    autoload: true 
+  }),
+  activities: Datastore.create({ 
+    filename: path.join(__dirname, '../data/activities.db'), 
+    autoload: true 
+  })
+};
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB connected successfully');
+    // Create data directory if it doesn't exist
+    const fs = require('fs');
+    const dataDir = path.join(__dirname, '../data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    console.log('NeDB databases initialized successfully');
+    return databases;
   } catch (error) {
-    console.error('MongoDB connection error:', error.message);
+    console.error('Database initialization error:', error.message);
     process.exit(1);
   }
 };
 
-module.exports = connectDB;
+module.exports = { connectDB, databases };
